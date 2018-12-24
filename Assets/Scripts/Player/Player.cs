@@ -281,16 +281,21 @@ public class Player : MonoBehaviour
 
         float elapse_time = 0;
 
+        GameObject targetPos = new GameObject();
+        targetPos.transform.position = target.position;
+
         while (elapse_time < flightDuration)
         {
             transform.Translate(0, (Vy - (dragDown * elapse_time)) * Time.deltaTime, Vx * Time.deltaTime);
 
             // Rotate projectile to face the target.
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation((target.position - transform.position).normalized), Time.deltaTime * 4.0f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation((targetPos.transform.position - transform.position).normalized), Time.deltaTime * 4.0f);
 
             elapse_time += Time.deltaTime;
 
             yield return null;
         }
+
+        Destroy(targetPos);
     }
 }
