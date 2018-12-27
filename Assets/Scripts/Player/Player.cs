@@ -7,30 +7,34 @@ public class Player : MonoBehaviour
 {
     public GameObject enemiesTrigger;
     public GameObject enemiesTriggerPivot;
-    public GameObject weaponHolder;
-    public Animator animator;
+    public GameObject weaponHolder;   
     public float moveSpeed;
     public float rotateSpeed;
-    public float gravity = 0.2f;
-    private float Gravity = -9.81f;
+    
+    private Animator animator;
+    
     private Vector3 _moveDir = Vector3.zero;
-
     private Vector3 moveDirection = Vector3.zero;
+
     private CharacterController controller;
-    private bool controlsDisabled;
+    
     private float vertical;
     private float horizontal;
     private float targetDistance;
-    private bool isAttacking;
-    public List<GameObject> weaponBounds;
-    public List<GameObject> weaponBoundsPrevious;
-
-    public List<Transform> enemies;
+    private float Gravity = -9.81f;
+    
+    private List<Transform> enemies;
     private List<string> enemiesHit;
+
+    private Event e;
     private Damage damage;
-    bool jump;
-    public bool grounded;
-    bool diveAvaible;
+
+    private bool controlsDisabled;
+    private bool isAttacking;
+    private bool jump;
+    private bool diveAvaible;
+    private bool dodgeAvaible;
+    private bool leftAlt = false;    
 
     // Start is called before the first frame update
     void Start()
@@ -41,7 +45,7 @@ public class Player : MonoBehaviour
         enemies = new List<Transform>();
         enemiesHit = new List<string>();
         damage = FindObjectOfType<Damage>();
-        diveAvaible = true;
+        diveAvaible = true;        
     }
 
     // Update is called once per frame
@@ -57,7 +61,7 @@ public class Player : MonoBehaviour
 
             vertical = Input.GetAxis("Vertical");
             horizontal = Input.GetAxis("Horizontal");
-
+            
             if (Input.GetButton("Fire1"))
             {
                 controlsDisabled = true;
@@ -100,7 +104,7 @@ public class Player : MonoBehaviour
             enemiesTrigger.transform.localPosition = new Vector3(0.0f, 0.0f, (hitRange / 2) + 0.5f);
             enemiesTriggerPivot.transform.localRotation = Quaternion.Euler(0.0f, 20f * turnAmount, 0.0f);
 
-            bool dive = Input.GetKey(KeyCode.Space);            
+            bool dive = Input.GetKey(KeyCode.Space);
             if (dive && diveAvaible)
             {
                 animator.SetBool("Dive", true);
@@ -110,6 +114,7 @@ public class Player : MonoBehaviour
                 StartCoroutine(Dive());
                 return;
             }
+            Dodge();
         }
         else
         {
@@ -121,22 +126,28 @@ public class Player : MonoBehaviour
         }
     }
 
+    private void OnGUI()
+    {
+        e = Event.current;
+        leftAlt = e.alt;
+    }
+
     private void FixedUpdate()
     {
-        if (controlsDisabled) return;     
+        if (controlsDisabled) return;
     }
 
     IEnumerator Dive()
     {
-        float v = 0;
-        float h = 0;
-        if (vertical > 0.1f)
+        float v = Input.GetAxis("Vertical");
+        float h = Input.GetAxis("Horizontal");
+        if (v > 0.1f)
             v = 1.0f;
-        else if (vertical < -0.1f)
+        else if (v < -0.1f)
             v = -1.0f;
-        if (horizontal > 0.1f)
+        if (h > 0.1f)
             h = 1.0f;
-        else if (horizontal < -0.1f)
+        else if (h < -0.1f)
             h = -1.0f;
         Vector3 camForward_Dir = Vector3.Scale(Camera.main.transform.forward, new Vector3(1, 0, 1)).normalized;
         Vector3 move = v * camForward_Dir + h * Camera.main.transform.right;
@@ -157,11 +168,71 @@ public class Player : MonoBehaviour
         animator.SetBool("Dive", false);
         Invoke("DiveRecharge", 0.2f);
         controlsDisabled = false;
-    } 
+    }
 
     void DiveRecharge()
     {
         diveAvaible = true;
+    }
+
+    void Dodge()
+    {
+        if (Input.GetKeyDown(KeyCode.W) && leftAlt)
+        {
+            DodgeValue(0);
+        }
+        else if (Input.GetKeyDown(KeyCode.A) && leftAlt)
+        {
+            DodgeValue(-90);
+        }
+        else if (Input.GetKeyDown(KeyCode.S) && leftAlt)
+        {
+            DodgeValue(180);
+        }
+        else if (Input.GetKeyDown(KeyCode.D) && leftAlt)
+        {
+            DodgeValue(90);
+        }
+    }
+
+    void DodgeValue(float turnAmount)
+    {
+        controlsDisabled = true;
+        animator.SetFloat("Vertical", 0);
+        StartCoroutine(StartDodge(turnAmount));
+    }
+
+    IEnumerator StartDodge(float turnAmount)
+    {
+        /*float v = Input.GetAxis("Vertical");
+        float h = Input.GetAxis("Horizontal");
+        if (v > 0.1f)
+            v = 1.0f;
+        else if (v < -0.1f)
+            v = -1.0f;
+        if (h > 0.1f)
+            h = 1.0f;
+        else if (h < -0.1f)
+            h = -1.0f;
+        Vector3 camForward_Dir = Vector3.Scale(Camera.main.transform.forward, new Vector3(1, 0, 1)).normalized;
+        Vector3 move = v * camForward_Dir + h * Camera.main.transform.right;
+        float turnAmount = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg;*/
+        transform.rotation = Quaternion.Euler(new Vector3(0, turnAmount+180, 0));
+        animator.SetBool("Dodge", true);
+        animator.SetFloat("DodgeValue", turnAmount);
+        float elapse_time = 0;
+
+        while (elapse_time < 0.65f)
+        {
+            //Move
+            transform.Translate(-Vector3.forward * moveSpeed * Time.deltaTime);
+
+            elapse_time += Time.deltaTime;
+
+            yield return null;
+        }
+        animator.SetBool("Dodge", false);
+        controlsDisabled = false;
     }
 
     bool isGrounded()
@@ -253,7 +324,7 @@ public class Player : MonoBehaviour
         {
             target.position = transform.position + transform.forward*1.95f;
         }
-        float dragDown = gravity;
+        float dragDown = 0.02f;
         float angle = 10f;
 
         // Calculate distance to target
