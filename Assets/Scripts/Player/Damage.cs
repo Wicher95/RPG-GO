@@ -33,11 +33,14 @@ public class Damage : MonoBehaviour {
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!enemiesHit.Contains(other.name) && other.gameObject.layer == 9)
+        if (enemiesHit != null)
         {
-            enemiesHit.Add(other.name);
-            other.gameObject.GetComponent<Enemy>().Damage(5.5f, player);
-            Debug.Log(other.name + " Hit");
+            if (!enemiesHit.Contains(other.name) && other.gameObject.layer == 9)
+            {
+                enemiesHit.Add(other.name);
+                other.gameObject.GetComponent<Enemy>().Damage(5.5f, player);
+                Debug.Log(other.name + " Hit");
+            }
         }
     }
 }

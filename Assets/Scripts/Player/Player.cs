@@ -12,7 +12,12 @@ public class Player : MonoBehaviour
     public float rotateSpeed;
     
     private Animator animator;
-    
+
+    public bool Fire1;
+    public bool DiveAnim;
+    public bool DodgeAnim;
+
+    public Vector3 move = Vector3.zero;
     private Vector3 _moveDir = Vector3.zero;
     private Vector3 moveDirection = Vector3.zero;
 
@@ -20,7 +25,7 @@ public class Player : MonoBehaviour
     
     private float vertical;
     private float horizontal;
-    private float targetDistance;
+    public float targetDistance;
     private float Gravity = -9.81f;
     
     private List<Transform> enemies;
@@ -34,18 +39,31 @@ public class Player : MonoBehaviour
     private bool jump;
     private bool diveAvaible;
     private bool dodgeAvaible;
-    private bool leftAlt = false;    
+    private bool leftAlt = false;
+
+    public bool MovementDirty { get; set; }
 
     // Start is called before the first frame update
     void Start()
-    {
+    {        
         animator = GetComponent<Animator>();
         controller = GetComponent<CharacterController>();
+        damage = FindObjectOfType<Damage>();
+
+        enemiesTriggerPivot = GenericFunctions.FindGameObjectInChildWithTag(gameObject, "TriggerPivot");
+        enemiesTrigger = GenericFunctions.FindGameObjectInChildWithTag(enemiesTriggerPivot, "EnemiesTrigger");
+        GameObject weapon = GenericFunctions.GetChildsWithTag(gameObject.transform, "Weapon")[0];
+        weapon.AddComponent<Damage>();
+        weapon.GetComponent<Damage>().player = gameObject;
+
         controlsDisabled = false;
+        MovementDirty = false;
+        diveAvaible = true;
+        moveSpeed = 4;
+        rotateSpeed = 240;
+
         enemies = new List<Transform>();
         enemiesHit = new List<string>();
-        damage = FindObjectOfType<Damage>();
-        diveAvaible = true;        
     }
 
     // Update is called once per frame
@@ -58,11 +76,11 @@ public class Player : MonoBehaviour
 
         if (!controlsDisabled)
         {
-
             vertical = Input.GetAxis("Vertical");
             horizontal = Input.GetAxis("Horizontal");
-            
-            if (Input.GetButton("Fire1"))
+
+            Fire1 = Input.GetButton("Fire1");
+            if (Fire1)
             {
                 controlsDisabled = true;
                 GetClosestEnemy(enemies, gameObject.transform);
@@ -73,31 +91,31 @@ public class Player : MonoBehaviour
             }
 
             Vector3 camForward_Dir = Vector3.Scale(Camera.main.transform.forward, new Vector3(1, 0, 1)).normalized;
-            Vector3 move = vertical * camForward_Dir + horizontal * Camera.main.transform.right;
+            move = vertical * camForward_Dir + horizontal * Camera.main.transform.right;
 
             if (move.magnitude > 1f) move.Normalize();
 
             // Calculate the rotation for the player
-            move = transform.InverseTransformDirection(move);
+            move = this.transform.InverseTransformDirection(move);
 
             // Get Euler angles
             float turnAmount = Mathf.Atan2(move.x, move.z);
 
-            transform.Rotate(0, turnAmount * rotateSpeed * Time.deltaTime, 0);
+            this.transform.Rotate(0, turnAmount * rotateSpeed * Time.deltaTime, 0);
 
             animator.SetFloat("Vertical", move.magnitude);
 
             //Vector3 _moveDir = transform.worldToLocalMatrix.MultiplyVector(transform.forward) * move.magnitude;
             if (controller.isGrounded)
             {
-                _moveDir = transform.forward * move.magnitude;
+                _moveDir = this.transform.forward * move.magnitude;
 
                 _moveDir *= moveSpeed;
             }
 
             _moveDir.y += Gravity * Time.deltaTime;
-
-            controller.Move(_moveDir * Time.deltaTime);
+            
+            this.controller.Move(_moveDir * Time.deltaTime);
 
             float hitRange = 2f * (move.magnitude + 1.0f);
             enemiesTrigger.GetComponent<CapsuleCollider>().height = hitRange;
@@ -107,6 +125,7 @@ public class Player : MonoBehaviour
             bool dive = Input.GetKey(KeyCode.Space);
             if (dive && diveAvaible)
             {
+                DiveAnim = true;
                 animator.SetBool("Dive", true);
                 animator.SetFloat("Vertical", 0.0f);
                 diveAvaible = false;
@@ -134,6 +153,7 @@ public class Player : MonoBehaviour
 
     private void FixedUpdate()
     {
+        MovementDirty = true;
         if (controlsDisabled) return;
     }
 
@@ -165,6 +185,7 @@ public class Player : MonoBehaviour
 
             yield return null;
         }
+        DiveAnim = false;
         animator.SetBool("Dive", false);
         Invoke("DiveRecharge", 0.2f);
         controlsDisabled = false;
@@ -197,6 +218,8 @@ public class Player : MonoBehaviour
 
     void DodgeValue(float turnAmount)
     {
+        DodgeAnim = true;
+        moveDirection = Vector3.zero;
         controlsDisabled = true;
         animator.SetFloat("Vertical", 0);
         StartCoroutine(StartDodge(turnAmount));
@@ -217,7 +240,7 @@ public class Player : MonoBehaviour
         Vector3 camForward_Dir = Vector3.Scale(Camera.main.transform.forward, new Vector3(1, 0, 1)).normalized;
         Vector3 move = v * camForward_Dir + h * Camera.main.transform.right;
         float turnAmount = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg;*/
-        transform.rotation = Quaternion.Euler(new Vector3(0, turnAmount+180, 0));
+        transform.rotation = Quaternion.Euler(new Vector3(0, turnAmount+180, 0));        
         animator.SetBool("Dodge", true);
         animator.SetFloat("DodgeValue", turnAmount);
         float elapse_time = 0;
@@ -231,6 +254,7 @@ public class Player : MonoBehaviour
 
             yield return null;
         }
+        DodgeAnim = false;
         animator.SetBool("Dodge", false);
         controlsDisabled = false;
     }

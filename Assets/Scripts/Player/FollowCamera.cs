@@ -17,7 +17,9 @@ public class FollowCamera : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        PlayerTransform = FindObjectOfType<Player>().gameObject.transform;
         transform.position = PlayerTransform.position + new Vector3(0.0f, 15.0f, -8.0f);
+        transform.rotation = Quaternion.Euler(new Vector3(60.0f, 0.0f, 0.0f));
         _cameraOffset = transform.position - PlayerTransform.position;
     }
 
