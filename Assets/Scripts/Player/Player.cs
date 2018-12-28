@@ -80,7 +80,7 @@ public class Player : MonoBehaviour
             horizontal = Input.GetAxis("Horizontal");
 
             Fire1 = Input.GetButton("Fire1");
-            if (Fire1)
+            if (Input.GetButton("Fire1"))
             {
                 controlsDisabled = true;
                 GetClosestEnemy(enemies, gameObject.transform);
@@ -172,14 +172,14 @@ public class Player : MonoBehaviour
         Vector3 camForward_Dir = Vector3.Scale(Camera.main.transform.forward, new Vector3(1, 0, 1)).normalized;
         Vector3 move = v * camForward_Dir + h * Camera.main.transform.right;
         float turnAmount = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(new Vector3(0, turnAmount, 0));
+        this.transform.rotation = Quaternion.Euler(new Vector3(0, turnAmount, 0));
 
         float elapse_time = 0;
 
         while (elapse_time < 1.55f)
         {
             //Move
-            transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
+            this.transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
 
             elapse_time += Time.deltaTime;
 
@@ -240,7 +240,7 @@ public class Player : MonoBehaviour
         Vector3 camForward_Dir = Vector3.Scale(Camera.main.transform.forward, new Vector3(1, 0, 1)).normalized;
         Vector3 move = v * camForward_Dir + h * Camera.main.transform.right;
         float turnAmount = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg;*/
-        transform.rotation = Quaternion.Euler(new Vector3(0, turnAmount+180, 0));        
+        this.transform.rotation = Quaternion.Euler(new Vector3(0, turnAmount+180, 0));        
         animator.SetBool("Dodge", true);
         animator.SetFloat("DodgeValue", turnAmount);
         float elapse_time = 0;
@@ -248,7 +248,7 @@ public class Player : MonoBehaviour
         while (elapse_time < 0.65f)
         {
             //Move
-            transform.Translate(-Vector3.forward * moveSpeed * Time.deltaTime);
+            this.transform.Translate(-Vector3.forward * moveSpeed * Time.deltaTime);
 
             elapse_time += Time.deltaTime;
 
@@ -348,7 +348,7 @@ public class Player : MonoBehaviour
         {
             target.position = transform.position + transform.forward*1.95f;
         }
-        float dragDown = 0.02f;
+        float dragDown = 0.2f;
         float angle = 10f;
 
         // Calculate distance to target
