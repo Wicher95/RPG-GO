@@ -218,7 +218,6 @@ public class Player : MonoBehaviour
 
     void DodgeValue(float turnAmount)
     {
-        DodgeAnim = true;
         moveDirection = Vector3.zero;
         controlsDisabled = true;
         animator.SetFloat("Vertical", 0);
@@ -240,6 +239,7 @@ public class Player : MonoBehaviour
         Vector3 camForward_Dir = Vector3.Scale(Camera.main.transform.forward, new Vector3(1, 0, 1)).normalized;
         Vector3 move = v * camForward_Dir + h * Camera.main.transform.right;
         float turnAmount = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg;*/
+        DodgeAnim = true;
         this.transform.rotation = Quaternion.Euler(new Vector3(0, turnAmount+180, 0));        
         animator.SetBool("Dodge", true);
         animator.SetFloat("DodgeValue", turnAmount);

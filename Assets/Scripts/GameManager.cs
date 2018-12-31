@@ -74,8 +74,8 @@ public class GameManager : MonoBehaviour {
                 userVariables.Add(new SFSUserVariable("moveVelocity", (double)localPlayerController.move.magnitude));
                 userVariables.Add(new SFSUserVariable("Fire1", localPlayerController.Fire1));
                 userVariables.Add(new SFSUserVariable("targetDistance", (double)localPlayerController.targetDistance));
-                userVariables.Add(new SFSUserVariable("Dive", localPlayerController.DiveAnim));
                 userVariables.Add(new SFSUserVariable("Dodge", localPlayerController.DodgeAnim));
+                userVariables.Add(new SFSUserVariable("Dive", localPlayerController.DiveAnim));                
                 sfs.Send(new SetUserVariablesRequest(userVariables));
 				localPlayerController.MovementDirty = false;
 			}
@@ -110,8 +110,8 @@ public class GameManager : MonoBehaviour {
 			userVariables.Add(new SFSUserVariable("moveVelocity", (double)localPlayerController.move.magnitude));
             userVariables.Add(new SFSUserVariable("Fire1", localPlayerController.Fire1));
             userVariables.Add(new SFSUserVariable("targetDistance", (double)localPlayerController.targetDistance));
-            userVariables.Add(new SFSUserVariable("Dive", localPlayerController.DiveAnim));
             userVariables.Add(new SFSUserVariable("Dodge", localPlayerController.DodgeAnim));
+            userVariables.Add(new SFSUserVariable("Dive", localPlayerController.DiveAnim));            
             sfs.Send(new SetUserVariablesRequest(userVariables));
 		}
 	}
@@ -137,52 +137,60 @@ public class GameManager : MonoBehaviour {
 		}
 	}
 
-	/**
+    /**
 	 * When user variable is updated on any client, then this event is received.
 	 * This is where most of the game logic for this example is contained.
 	 */
-	public void OnUserVariableUpdate(BaseEvent evt) {
-		List<string> changedVars = (List<string>)evt.Params["changedVars"];
+    public void OnUserVariableUpdate(BaseEvent evt)
+    {
+        List<string> changedVars = (List<string>)evt.Params["changedVars"];
 
-	    SFSUser user = (SFSUser)evt.Params["user"];
-		
-		if (user == sfs.MySelf) return;
-		
-		if (!remotePlayers.ContainsKey(user)) {
-			// New client just started transmitting - lets create remote player
-			Vector3 pos = new Vector3(0, 1, 0);
-			if (user.ContainsVariable("x") && user.ContainsVariable("y") && user.ContainsVariable("z")) {
-				pos.x = (float)user.GetVariable("x").GetDoubleValue();
-				pos.y = (float)user.GetVariable("y").GetDoubleValue();
-				pos.z = (float)user.GetVariable("z").GetDoubleValue();
-			}
-			float rotAngle = 0;
-			if (user.ContainsVariable("rot")) {
-				rotAngle = (float)user.GetVariable("rot").GetDoubleValue();
-			}
-			int numModel = 0;
-			if (user.ContainsVariable("model")) {
-				numModel = user.GetVariable("model").GetIntValue();
-			}
-			int numMaterial = 0;
-			if (user.ContainsVariable("mat")) {
-				numMaterial = user.GetVariable("mat").GetIntValue();
-			}
+        SFSUser user = (SFSUser)evt.Params["user"];
+
+        if (user == sfs.MySelf) return;
+
+        if (!remotePlayers.ContainsKey(user))
+        {
+            // New client just started transmitting - lets create remote player
+            Vector3 pos = new Vector3(0, 1, 0);
+            if (user.ContainsVariable("x") && user.ContainsVariable("y") && user.ContainsVariable("z"))
+            {
+                pos.x = (float)user.GetVariable("x").GetDoubleValue();
+                pos.y = (float)user.GetVariable("y").GetDoubleValue();
+                pos.z = (float)user.GetVariable("z").GetDoubleValue();
+            }
+            float rotAngle = 0;
+            if (user.ContainsVariable("rot"))
+            {
+                rotAngle = (float)user.GetVariable("rot").GetDoubleValue();
+            }
+            int numModel = 0;
+            if (user.ContainsVariable("model"))
+            {
+                numModel = user.GetVariable("model").GetIntValue();
+            }
+            int numMaterial = 0;
+            if (user.ContainsVariable("mat"))
+            {
+                numMaterial = user.GetVariable("mat").GetIntValue();
+            }
             float moveVelocity = 0;
-            if(user.ContainsVariable("moveVelocity"))
+            if (user.ContainsVariable("moveVelocity"))
             {
                 moveVelocity = (float)user.GetVariable("moveVelocity").GetDoubleValue();
             }
-			SpawnRemotePlayer(user, numModel, numMaterial, pos, Quaternion.Euler(0, rotAngle, 0), moveVelocity);
-		}
-		
-	    // Check if the remote user changed his position or rotation
-    	if (changedVars.Contains("x") && changedVars.Contains("y") && changedVars.Contains("z") && changedVars.Contains("rot")) {
-        	// Move the character to a new position...
-			remotePlayers[user].GetComponent<SimpleRemoteInterpolation>().SetTransform(
-				new Vector3((float)user.GetVariable("x").GetDoubleValue(), (float)user.GetVariable("y").GetDoubleValue(), (float)user.GetVariable("z").GetDoubleValue()),
-				Quaternion.Euler(0, (float)user.GetVariable("rot").GetDoubleValue(), 0),
-				true);
+            SpawnRemotePlayer(user, numModel, numMaterial, pos, Quaternion.Euler(0, rotAngle, 0), moveVelocity);
+        }
+
+        // Check if the remote user changed his position or rotation
+        if (changedVars.Contains("x") && changedVars.Contains("y") && changedVars.Contains("z") && changedVars.Contains("rot"))
+        {
+            // Move the character to a new position...
+            remotePlayers[user].GetComponent<SimpleRemoteInterpolation>().SetTransform(
+                new Vector3((float)user.GetVariable("x").GetDoubleValue(), (float)user.GetVariable("y").GetDoubleValue(), (float)user.GetVariable("z").GetDoubleValue()),
+                Quaternion.Euler(0, (float)user.GetVariable("rot").GetDoubleValue(), 0),
+                true);
+
             Animator animator = remotePlayers[user].GetComponent<Animator>();
             if (changedVars.Contains("moveVelocity"))
                 animator.SetFloat("Vertical", (float)user.GetVariable("moveVelocity").GetDoubleValue());
@@ -196,16 +204,19 @@ public class GameManager : MonoBehaviour {
                 animator.SetBool("Dive", user.GetVariable("Dive").GetBoolValue());
         }
 
-		// Remote client selected new model?
-		if (changedVars.Contains("model")) {
-			SpawnRemotePlayer(user, user.GetVariable("model").GetIntValue(), user.GetVariable("mat").GetIntValue(), remotePlayers[user].transform.position, remotePlayers[user].transform.rotation, 0.0f);
-		}
 
-		// Remote client selected new material?
-		if (changedVars.Contains("mat")) {
-			remotePlayers[user].GetComponentInChildren<Renderer>().material = playerMaterials[ user.GetVariable("mat").GetIntValue() ];
-		}
-	}
+        // Remote client selected new model?
+        if (changedVars.Contains("model"))
+        {
+            SpawnRemotePlayer(user, user.GetVariable("model").GetIntValue(), user.GetVariable("mat").GetIntValue(), remotePlayers[user].transform.position, remotePlayers[user].transform.rotation, 0.0f);
+        }
+
+        // Remote client selected new material?
+        if (changedVars.Contains("mat"))
+        {
+            remotePlayers[user].GetComponentInChildren<Renderer>().material = playerMaterials[user.GetVariable("mat").GetIntValue()];
+        }
+    }
 
 
 	//----------------------------------------------------------

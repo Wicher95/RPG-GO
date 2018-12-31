@@ -28,7 +28,7 @@ public class ConnectionUI : MonoBehaviour {
 	public int WSPort = 8080;
 	
 	[Tooltip("Name of the SmartFoxServer 2X Zone to join")]
-	public string Zone = "BasicExamples";
+	public string Zone = "Game";
 
 	//----------------------------------------------------------
 	// UI elements
@@ -148,7 +148,7 @@ public class ConnectionUI : MonoBehaviour {
 	}
 	
 	private void OnLogin(BaseEvent evt) {
-		string roomName = "Game Room";
+		string roomName = "GameRoom";
 
 		// We either create the Game Room or join it if it exists already
 		if (sfs.RoomManager.ContainsRoom(roomName)) {
@@ -156,6 +156,7 @@ public class ConnectionUI : MonoBehaviour {
 		} else {
 			RoomSettings settings = new RoomSettings(roomName);
 			settings.MaxUsers = 40;
+            settings.MaxVariables = 18;
 			sfs.Send(new CreateRoomRequest(settings, true));
 		}
 	}
