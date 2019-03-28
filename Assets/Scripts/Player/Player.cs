@@ -74,6 +74,14 @@ public class Player : MonoBehaviour
             Application.Quit();
         }
 
+        if(Input.GetAxis("Vertical") != 0 || Input.GetAxis("Horizontal") != 0)
+        {
+            animator.SetBool("PlayerWalkInput", true);
+        } else
+        {
+            animator.SetBool("PlayerWalkInput", false);
+        }
+
         if (!controlsDisabled)
         {
             vertical = Input.GetAxis("Vertical");
@@ -114,7 +122,7 @@ public class Player : MonoBehaviour
             }
 
             _moveDir.y += Gravity * Time.deltaTime;
-            
+
             this.controller.Move(_moveDir * Time.deltaTime);
 
             float hitRange = 2f * (move.magnitude + 1.0f);
@@ -176,7 +184,7 @@ public class Player : MonoBehaviour
 
         float elapse_time = 0;
 
-        while (elapse_time < 1.55f)
+        while (elapse_time < 1.25f)
         {
             //Move
             this.transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
